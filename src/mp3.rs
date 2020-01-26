@@ -135,12 +135,3 @@ struct ParsedMp3
     frames: vec!(Frame),
     len: u32,
 }
-
-impl ParsedMp3
-
-
-#[cfg(test)]
-mod tests
-{
-
-}
