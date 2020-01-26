@@ -111,8 +111,6 @@ struct FrameHeader
 #[derive(Debug)]
 struct FrameHeaderError;
 
-impl Error for FrameHeader {}
-
 impl fmt::Display for FrameHeaderError
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
