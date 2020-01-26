@@ -130,7 +130,7 @@ struct Frame
 }
 
 // Represents a parsed MP3 file as a sequence of repeating parsed MP3 frames
-struct ParsedMp3<'a>
+struct ParsedMp3
 {
     frames: Vec<Frame>,
     len: u32,
