@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Clay Raynor <cd.raynor@gmail.com>"]
 edition = "2018"
 license = "MIT"
+license-file = "LICENSE.txt"
+description = "A general purpose library for parsing common binary file formats such as mp3, wav, jpeg, etc."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
