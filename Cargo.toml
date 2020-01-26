@@ -1,0 +1,10 @@
+[package]
+name = "binny"
+version = "0.1.0"
+authors = ["Clay Raynor <cd.raynor@gmail.com>"]
+edition = "2018"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
