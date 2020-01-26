@@ -123,15 +123,15 @@ impl fmt::Display for FrameHeaderError
 
 // Represents an MP3 frame. Each frame contains a header struct and a vector of the bytes
 // of the data portion of the frame.
-struct Frame<'a>
+struct Frame
 {
-    header: Result<&'a FrameHeader, FrameHeaderError>,
+    header: Result<FrameHeader, FrameHeaderError>,
     data: Vec<u8>,
 }
 
 // Represents a parsed MP3 file as a sequence of repeating parsed MP3 frames
-struct ParsedMp3
+struct ParsedMp3<'a>
 {
-    frames: vec!(Frame),
+    frames: Vec<Frame>,
     len: u32,
 }
