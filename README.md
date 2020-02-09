@@ -39,8 +39,8 @@ The following is the list of features and functionality on the roadmap for `binn
 
 ## License
 
-`binny` is free and open source software licensed under the MIT license. For further details please refer to the
-`LICENSE.txt` file or [here](https://opensource.org/licenses/MIT).
+`binny` is free and open source software licensed under version 3.0 of the GNU Lesser General Public License. 
+For further details please refer to the `COPYING` file or [here](https://www.gnu.org/licenses/lgpl-3.0.en.html).
 
 ## How to Contribute
 
@@ -58,8 +58,12 @@ compatibility with prior releases is not guaranteed.
 
 ### Documentation
 
-All contributions are expected to sufficiently documented. This a docstring for all callables, modules, and traits. All
-contributions are expected to have accompanying unit tests.
+Contributions should be sufficiently documented. This a docstring for all callables, modules, and traits. All
+
+### Testing
+
+Contributions should have accompanying unit tests for individual components and integration tests for any API that is
+formed via publicly accessible members.
 
 ### Git Branching
 
