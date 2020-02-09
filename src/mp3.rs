@@ -1,7 +1,8 @@
 use std::{error::Error, fmt};
-use std::io::Read;
-use crate::mp3::LayerDesc::{Layer1, Layer3};
 use std::fs::read;
+use std::io::Read;
+
+use crate::mp3::LayerDesc::{Layer1, Layer3};
 use crate::mp3::ProtectionBit::Unprotected;
 use crate::mp3::ChannelMode::SingleChannel;
 
@@ -34,6 +35,7 @@ enum MpegVersion
 }
 
 // Layer Description
+#[derive(Clone, Copy)]
 enum LayerDesc
 {
     // Reserved bit combination (00)
@@ -96,17 +98,19 @@ enum Emphasis
 // Audio Layer I/II/II frame header
 struct FrameHeader
 {
-    mpeg_version: MpegVersion,  // MPEG Version of the frame
-    layer: LayerDesc,           // MPEG layer of the frame
-    unprotected: bool,          // If true, no 16 bit CRC follows the header
-    bit_rate: u32,              // The bitrate for the frame
-    sample_freq: u32,           // The sample rate of the frame in bits per second
-    padded: bool,               // If true, use a padding slot to fit the bitrate
-    private: bool,              // Informative only
-    channel_mode: ChannelMode,  // Channel model of the frame
-    mode_extension: u8,         // Only used in joint stereo and only values 0, 1, 2, & 3 are permitted
-    copy_righted: bool,         // Has the same meaning as the copyright bit on CDs
-    original: bool,             // If true, the frame presides on its original media
+    mpeg_version: MpegVersion,      // MPEG Version of the frame
+    layer_desc: LayerDesc,          // MPEG layer of the frame
+    unprotected: ProtectionBit,     // If true, no 16 bit CRC follows the header
+    bit_rate: u32,                  // The bitrate for the frame
+    sample_rate: u32,               // The sample rate of the frame in bits per second
+    padded: bool,                   // If true, use a padding slot to fit the bitrate
+    private: bool,                  // Informative only
+    channel_mode: ChannelMode,      // Channel model of the frame
+    mode_ext_band: Option<u8>,      // Only used in Layer I & II joint stereo. The value is the start band.
+    intensity_stereo: Option<bool>, // Only used in Layer III join stereo.
+    ms_stereo: Option<bool>,        // Only used in Layer III join stereo.
+    copy_righted: bool,             // Has the same meaning as the copyright bit on CDs
+    original: bool,                 // If true, the frame presides on its original media
     emphasis: Emphasis,         // Tells the de-coder to de-emphasize the file during decoding, is rarely used
 }
 
@@ -186,7 +190,7 @@ impl FrameHeader
 
     // Accepts a slice of four u8 values and returns either FrameHeader or a FrameHeaderError
     // for invalid headers.
-    fn new(slice: &[u8]) -> Result<(), FrameHeaderError>
+    fn new(slice: &[u8]) -> Result<FrameHeader, FrameHeaderError>
     {
         let value = u32::from_ne_bytes(slice);
 
@@ -209,7 +213,7 @@ impl FrameHeader
         };
         // Check the Layer Description of the header. The combination of the bits, 18 and 17, used
         // for this section cannot both be False. That is a reserved combination.
-        let layer_description = match (LAYER_DESCRIPTION & value) >> 17
+        let layer_desc = match (LAYER_DESCRIPTION & value) >> 17
         {
             0b00 => return Err(FrameHeaderError::new("Reserved value '0b00' used for Layer Description!")),
             0b01 => LayerDesc::Layer3,
@@ -227,7 +231,7 @@ impl FrameHeader
         let bit_rate = match (BITRATE_INDEX & value) >> 12
         {
             0b1111 => return Err(FrameHeaderError::new("Invalid value '0b1111' for Bitrate index!")),
-            _ => FrameHeader::decode_bitrate((BITRATE_INDEX & value) >> 12, mpeg_version, layer_description)
+            _ => FrameHeader::decode_bitrate((BITRATE_INDEX & value) >> 12, mpeg_version, layer_desc)
         };
         // Lookup the sampling rate frequency using bits 11 through 10, The value 0b11 is a reserved value.
         let sample_rate = match (SAMPLE_FREQ & value) >> 10
@@ -235,8 +239,8 @@ impl FrameHeader
             0b00 => FrameHeader::decode_sample_rate((SAMPLE_FREQ & value) >> 10, mpeg_version),
             _ => return Err(FrameHeaderError::new("Reserved value '0b11' used for sampling rate index!"))
         };
-        let padding_bit =  ((PADDING_BIT & value) >> 9) as bool;
-        let private_bit = ((PRIVATE_BIT & value) >> 8) as bool;
+        let padded =  ((PADDING_BIT & value) >> 9) as bool;
+        let private = ((PRIVATE_BIT & value) >> 8) as bool;
         let channel_mode = match (CHANNEL_MODE & value) >> 6
         {
             0b00 => ChannelMode::Stereo,
@@ -245,11 +249,77 @@ impl FrameHeader
             0b11 => ChannelMode::SingleChannel,
             _ => return Err(FrameHeaderError::new("Error encountered when parsing channel mode!"))
         };
-
+        if channel_mode == ChannelMode::JointStereo
+        {
+            if layer_desc == LayerDesc::Layer1 || layer_desc == LayerDesc::Layer2
+            {
+                let mode_ext_band = match (MODE_EXT & value) >> 4
+                {
+                    0b00 => Some(4),
+                    0b01 => Some(8),
+                    0b10 => Some(12),
+                    0b11 => Some(16),
+                    _    => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
+                };
+                let intensity_stereo = None;
+                let ms_stereo = None;
+            }
+            else
+            {
+                let mode_ext_band = None;
+                let intensity_stereo = match (MODE_EXT & value) >> 4
+                {
+                    0b00 => false,
+                    0b01 => true,
+                    0b10 => true,
+                    0b11 => false,
+                    _    => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
+                };
+                let ms_stereo = match (MODE_EXT & value) >> 4
+                {
+                    0b00 => false,
+                    0b01 => false,
+                    0b10 => true,
+                    0b11 => true,
+                    _   => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
+                };
+            }
+        }
         else
         {
-            Ok(())
-        }
+            let mode_ext_band = None;
+            let intensity_stereo = None;
+            let ms_stereo = None;
+        };
+        let copy_righted =  ((COPYRIGHT & value) >> 3) as bool;
+        let original = ((ORIGINAL & value) >> 2) as bool;
+        let emphasis = match (ORIGINAL & value) >> 2
+        {
+            0b00 => Emphasis::None,
+            0b01 => Emphasis::Ms5015,
+            0b10 => return Err(FrameHeaderError::new("Reserved value '0b10' used for emphasis!")),
+            0b11 => Emphasis::CcitJ17,
+            _ => return Err(FrameHeaderError::new("Error encountered when parsing emphasis!"))
+        };
+
+        return Ok(
+            FrameHeader {
+                mpeg_version,
+                layer_desc,
+                unprotected,
+                bit_rate,
+                sample_rate,
+                padded,
+                private,
+                channel_mode,
+                mode_ext_band,
+                intensity_stereo,
+                ms_stereo,
+                copy_righted,
+                original,
+                emphasis,
+            }
+        )
     }
 }
 
