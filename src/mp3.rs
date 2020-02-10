@@ -128,7 +128,7 @@ impl FrameHeader
             [64_000,    48_000,     40_000,     48_000,     16_000],
             [96_000,    56_000,     48_000,     56_000,     24_000],
             [128_000,   64_000,     56_000,     64_000,     32_000],
-            [160_000,   80_000,     64_000,     80_000,     40_00],
+            [160_000,   80_000,     64_000,     80_000,     40_000],
             [192_000,   96_000,     80_000,     96_000,     48_000],
             [224_000,   112_000,    96_000,     112_000,    56_000],
             [256_000,   128_000,    112_000,    128_000,    64_000],
@@ -363,6 +363,7 @@ impl Mp3
 mod tests
 {
     use super::*;
+    use crate::mp3::LayerDesc::Layer1;
 
     // This function verifies the FrameHeader::decode_bitrate() method.
     #[test]
@@ -381,7 +382,7 @@ mod tests
         assert_eq!(0, FrameHeader::decode_bitrate(0b0000, MpegVersion::Version25, LayerDesc::Layer2));
         assert_eq!(0, FrameHeader::decode_bitrate(0b0000, MpegVersion::Version25, LayerDesc::Layer3));
 
-
+        // Bitrate Index value of 0b0001
         assert_eq!(32_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version1, LayerDesc::Layer1));
         assert_eq!(32_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version1, LayerDesc::Layer2));
         assert_eq!(32_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version1, LayerDesc::Layer3));
@@ -391,5 +392,148 @@ mod tests
         assert_eq!(32_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version25, LayerDesc::Layer1));
         assert_eq!(8_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version25, LayerDesc::Layer2));
         assert_eq!(8_000, FrameHeader::decode_bitrate(0b0001, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0010
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(40_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(16_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(16_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(16_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(16_000, FrameHeader::decode_bitrate(0b0010, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0011
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(24_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(24_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(24_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(24_000, FrameHeader::decode_bitrate(0b0011, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0100
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(32_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(32_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(32_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(32_000, FrameHeader::decode_bitrate(0b0100, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0101
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(40_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(40_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(40_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(40_000, FrameHeader::decode_bitrate(0b0101, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0110
+        assert_eq!(192_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(48_000, FrameHeader::decode_bitrate(0b0110, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b0111
+        assert_eq!(224_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(56_000, FrameHeader::decode_bitrate(0b0111, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b1000
+        assert_eq!(256_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(64_000, FrameHeader::decode_bitrate(0b1000, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value 0b1001
+        assert_eq!(228_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(80_000, FrameHeader::decode_bitrate(0b1001, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value of 0b1010
+        assert_eq!(320_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(192_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(96_000, FrameHeader::decode_bitrate(0b1010, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value 0b1011
+        assert_eq!(352_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(224_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(192_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(176_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(176_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(112_000, FrameHeader::decode_bitrate(0b1011, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value 0b1100
+        assert_eq!(384_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(256_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(224_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(192_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(192_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(128_000, FrameHeader::decode_bitrate(0b1100, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value 0b1101
+        assert_eq!(416_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(320_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(256_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(224_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(224_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(144_000, FrameHeader::decode_bitrate(0b1101, MpegVersion::Version25, LayerDesc::Layer3));
+
+        // Bitrate Index value 0b1110
+        assert_eq!(448_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version1, LayerDesc::Layer1));
+        assert_eq!(384_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version1, LayerDesc::Layer2));
+        assert_eq!(320_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version1, LayerDesc::Layer3));
+        assert_eq!(256_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version2, LayerDesc::Layer1));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version2, LayerDesc::Layer2));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version2, LayerDesc::Layer3));
+        assert_eq!(256_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer1));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer2));
+        assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer3));
     }
 }
