@@ -187,7 +187,7 @@ impl FrameHeader
         let look_up: u32 = match ver {
             MpegVersion::Version1 => 0,
             MpegVersion::Version2 => 1,
-            MpegVersion::Version25 => 1,
+            MpegVersion::Version25 => 2,
         };
         return SAMPLING_RATES[bits as usize][look_up as usize];
     }
@@ -365,7 +365,7 @@ mod tests
     use super::*;
     use crate::mp3::LayerDesc::Layer1;
 
-    // This function verifies the FrameHeader::decode_bitrate() method.
+    // This test case verifies the FrameHeader::decode_bitrate() method.
     #[test]
     fn test_decode_bitrate()
     {
@@ -535,5 +535,25 @@ mod tests
         assert_eq!(256_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer1));
         assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer2));
         assert_eq!(160_000, FrameHeader::decode_bitrate(0b1110, MpegVersion::Version25, LayerDesc::Layer3));
+    }
+
+    // This test case verifies the FrameHeader::decode_sample_rate()
+    #[test]
+    fn test_decode_sample_rate()
+    {
+        // Sampling rate index value '0b00'
+        assert_eq!(44_100, FrameHeader::decode_sample_rate(0b00,MpegVersion::Version1));
+        assert_eq!(22_050, FrameHeader::decode_sample_rate(0b00,MpegVersion::Version2));
+        assert_eq!(11_025, FrameHeader::decode_sample_rate(0b00,MpegVersion::Version25));
+
+        // Sampling rate index value '0b01'
+        assert_eq!(48_000, FrameHeader::decode_sample_rate(0b01, MpegVersion::Version1));
+        assert_eq!(24_000, FrameHeader::decode_sample_rate(0b01, MpegVersion::Version2));
+        assert_eq!(12_000, FrameHeader::decode_sample_rate(0b01, MpegVersion::Version25));
+
+        // Sampling rate index '0b10'
+        assert_eq!(32_000, FrameHeader::decode_sample_rate(0b10, MpegVersion::Version1));
+        assert_eq!(16_000, FrameHeader::decode_sample_rate(0b10, MpegVersion::Version2));
+        assert_eq!(8_000, FrameHeader::decode_sample_rate(0b10, MpegVersion::Version25));
     }
 }
