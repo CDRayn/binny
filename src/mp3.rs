@@ -1,5 +1,6 @@
 use std::{error::Error, fmt};
 use std::io::Read;
+use crate::mp3::ProtectionBit::Protected;
 
 // These constants are for parsing the various portions of the MP3 Frame header. The
 // bits set to True in these constants are the bits used by that section of the header.
@@ -304,6 +305,33 @@ impl FrameHeader
             _ => return Err(FrameHeaderError::new("Error encountered when parsing emphasis!"))
         };
 
+
+        // For Layer II MP3s, some combinations of bitrate and channel mode are invalid and should return an error
+        if layer_desc == LayerDesc::Layer2
+        {
+            if channel_mode != ChannelMode::SingleChannel
+            {
+                match bit_rate
+                {
+                    32_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    48_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    56_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    80_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    _      => (),
+                }
+            }
+            else
+            {
+                match bit_rate
+                {
+                    224_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    256_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    320_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    384_000 => return Err(FrameHeaderError::new("Prohibited bitrate and chanel mode for Layer II encountered!")),
+                    _       => (),
+                }
+            }
+        }
         return Ok(
             FrameHeader {
                 mpeg_version,
