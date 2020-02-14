@@ -85,7 +85,7 @@ struct FrameHeader
 // TODO: Make errors more granular by specifying what is wrong in the header, rather than just specifying
 //  that the header is invalid
 // Error Invalid Headers
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct FrameHeaderError
 {
     details: String
@@ -196,7 +196,7 @@ impl FrameHeader
     // for invalid headers.
     fn new(slice: [u8; 4]) -> Result<FrameHeader, FrameHeaderError>
     {
-        let value = u32::from_ne_bytes(slice);
+        let value = u32::from_be_bytes(slice);
 
         // Check for the sync word in the first 12 bits. Something bit-wise AND'd with itself
         // is itself. If the sync-word is missing a different value will be produced.
@@ -556,4 +556,54 @@ mod tests
         assert_eq!(16_000, FrameHeader::decode_sample_rate(0b10, MpegVersion::Version2));
         assert_eq!(8_000, FrameHeader::decode_sample_rate(0b10, MpegVersion::Version25));
     }
+
+    /// Verifies that FrameHeader::new() returns an error if the sync word is missing from the data being parsed
+    #[test]
+    fn test_frame_header_no_sync_word()
+    {
+        let data = [0b1011_1011, 0b1111_1000, 0b0000_0000, 0b0000_0000];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Sync word not found!");
+    }
+
+    /// Verifies that FrameHeader::new() returns an error if value `0b01` is used for the MPEG Version.
+    #[test]
+    fn test_frame_header_new_bad_mpeg()
+    {
+        let data = [0b1111_1111, 0b1110_1000, 0b0000_0000, 0b0000_0000];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b01' used for MPEG Version ID!");
+    }
+
+    /// Verifies that FrameHeader::new() returns an error if `0b00` is used for the Layer Description value
+    #[test]
+    fn test_frame_header_new_bad_layer_desc()
+    {
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0000, 0b0000_0000, 0b0000_0000];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b00' used for Layer Description!");
+    }
+
+    /// Verifies that FrameHeader::new() returns an error if `0b1111` is used for the bitrate index
+    #[test]
+    fn test_frame_header_new_bad_bitrate()
+    {
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0100, 0b1111_0000, 0b0000_0000];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Invalid value '0b1111' for Bitrate index!");
+    }
+    /// Verifies that FrameHeader::new() returns an error if `0b11` is used for the sample rate
+    #[test]
+    fn test_frame_header_new_bad_sample_rate()
+    {
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0100, 0b1011_1100, 0b0000_0000];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b11' used for sampling rate index!");
+    }
+
 }
