@@ -240,8 +240,8 @@ impl FrameHeader
         // Lookup the sampling rate frequency using bits 11 through 10, The value 0b11 is a reserved value.
         let sample_rate = match (SAMPLE_FREQ & value) >> 10
         {
-            0b00 => FrameHeader::decode_sample_rate((SAMPLE_FREQ & value) >> 10, mpeg_version),
-            _ => return Err(FrameHeaderError::new("Reserved value '0b11' used for sampling rate index!"))
+            0b11 => return Err(FrameHeaderError::new("Reserved value '0b11' used for sampling rate index!")),
+            _ => FrameHeader::decode_sample_rate((SAMPLE_FREQ & value) >> 10, mpeg_version),
         };
         let padded =  ((PADDING_BIT & value) >> 9) != 0;
         let private = ((PRIVATE_BIT & value) >> 8) != 0;
@@ -295,7 +295,7 @@ impl FrameHeader
         }
         let copy_righted =  ((COPYRIGHT & value) >> 3) != 0;
         let original = ((ORIGINAL & value) >> 2) != 0;
-        let emphasis = match (ORIGINAL & value) >> 2
+        let emphasis = match EMPHASIS & value
         {
             0b00 => Emphasis::None,
             0b01 => Emphasis::Ms5015,
@@ -604,6 +604,15 @@ mod tests
         let x = FrameHeader::new(data);
         assert_eq!(x.is_err(), true);
         assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b11' used for sampling rate index!");
+    }
+    /// Verifies that FrameHeader::new() returns an error if `0b10` is used for the emphasis value.
+    #[test]
+    fn test_frame_header_new_bad_emphasis()
+    {
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0100, 0b1011_1000, 0b0000_0010];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_err(), true);
+        assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b10' used for emphasis!");
     }
 
 }
