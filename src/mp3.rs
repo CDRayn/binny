@@ -849,4 +849,83 @@ mod tests
         let x = FrameHeader::new(data);
         assert_eq!(x.unwrap().bit_rate, 384_000);
     }
+    /// Verifies that FrameHeader::new() correctly parses the bitrate index for MPEG Version 1 and Layer III
+    #[test]
+    fn test_frame_header_new_bitrate_v1l3()
+    {
+        // Free bitrate, aka 0
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0000_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 0);
+
+        // 32Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0001_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 32_000);
+
+        // 40Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0010_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 40_000);
+
+        // 48Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0011_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 48_000);
+
+        // 56Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0100_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 56_000);
+
+        // 64Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0101_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 64_000);
+
+        // 80Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0110_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 80_000);
+
+        // 96Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b0111_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 96_000);
+
+        // 112Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1000_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 112_000);
+
+        // 128Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1001_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 128_000);
+
+        // 160Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1010_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 160_000);
+
+        // 192Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1011_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 192_000);
+
+        // 224Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1100_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 224_000);
+
+        // 256Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1101_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 256_000);
+
+        // 320Kbps
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().bit_rate, 320_000);
+    }
 }
