@@ -20,8 +20,9 @@ const COPYRIGHT: u32 =          0x00_00_00_08; // 00000000 00000000 00000000 000
 const ORIGINAL: u32 =           0x00_00_00_04; // 00000000 00000000 00000000 00000100
 const EMPHASIS: u32 =           0x00_00_00_03; // 00000000 00000000 00000000 00000011
 
-// MPEG Audio version ID
-#[derive(Clone, Copy, PartialEq)]
+/// MPEG Audio version ID
+// TODO: manually implement these traits to reduce compile times.
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum MpegVersion
 {
     Version25,  // MPEG Version 2.5 (00)
@@ -31,7 +32,7 @@ enum MpegVersion
 }
 
 // Layer Description
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum LayerDesc
 {
     // Reserved bit combination (00)
@@ -41,6 +42,7 @@ enum LayerDesc
 }
 
 // Protection bit
+#[derive(Debug, PartialEq)]
 enum ProtectionBit
 {
     Protected, // Protected by following 16 bit CRC header (0)
@@ -69,7 +71,7 @@ struct FrameHeader
 {
     mpeg_version: MpegVersion,      // MPEG Version of the frame
     layer_desc: LayerDesc,          // MPEG layer of the frame
-    unprotected: ProtectionBit,     // If true, no 16 bit CRC follows the header
+    protection_bit: ProtectionBit,     // If true, no 16 bit CRC follows the header
     bit_rate: u32,                  // The bitrate for the frame
     sample_rate: u32,               // The sample rate of the frame in bits per second
     padded: bool,                   // If true, use a padding slot to fit the bitrate
@@ -336,7 +338,7 @@ impl FrameHeader
             FrameHeader {
                 mpeg_version,
                 layer_desc,
-                unprotected,
+                protection_bit: unprotected,
                 bit_rate,
                 sample_rate,
                 padded,
@@ -643,4 +645,64 @@ mod tests
         assert_eq!(x.err().unwrap().to_string(), "Reserved value '0b10' used for emphasis!");
     }
 
+    /// Verifies that FrameHeader::new() correctly parses the MPEG audio version ID.
+    #[test]
+    fn test_frame_header_new_mpeg_version()
+    {
+        // MPEG version 2.5
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0100, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().mpeg_version, MpegVersion::Version25);
+
+        // MPEG version 2
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0100, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().mpeg_version, MpegVersion::Version2);
+
+        // MPEG version 1
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1100, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().mpeg_version, MpegVersion::Version1);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the layer description.
+    #[test]
+    fn test_frame_header_new_layer_desc()
+    {
+        // Layer Description III
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0010, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().layer_desc, LayerDesc::Layer3);
+
+        // Layer Description II
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0100, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().layer_desc, LayerDesc::Layer2);
+
+        // Layer Description I
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0110, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().layer_desc, LayerDesc::Layer1);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the protection bit.
+    #[test]
+    fn test_frame_header_new_protect_bit()
+    {
+        // Protected
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0110, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().protection_bit, ProtectionBit::Protected);
+
+        // Protected
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0111, 0b1011_1000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.is_ok(), true);
+        assert_eq!(x.unwrap().protection_bit, ProtectionBit::Unprotected);
+    }
 }
