@@ -57,12 +57,11 @@ enum ChannelMode
     DualChannel,    // 2 Mono Channels
     SingleChannel,  // Mono
 }
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 enum Emphasis
 {
     None,
     Ms5015,
-    Reserved,
     CcitJ17,
 }
 
@@ -83,7 +82,7 @@ struct FrameHeader
     ms_stereo: Option<bool>,        // Only used in Layer III joint stereo.
     copy_righted: bool,             // Has the same meaning as the copyright bit on CDs
     original: bool,                 // If true, the frame presides on its original media
-    emphasis: Emphasis,         // Tells the de-coder to de-emphasize the file during decoding, is rarely used
+    emphasis: Emphasis,             // Tells the de-coder to de-emphasize the file during decoding, is rarely used
 }
 
 // TODO: Make errors more granular by specifying what is wrong in the header, rather than just specifying
@@ -1565,5 +1564,25 @@ mod tests
         let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0111];
         let x = FrameHeader::new(data).unwrap();
         assert_eq!(x.original, true);
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the emphasis value
+    #[test]
+    fn test_frame_header_new_emphasis()
+    {
+        // No emphasis
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0000];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.emphasis, Emphasis::None);
+
+        // 50/15 ms
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0001];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.emphasis, Emphasis::Ms5015);
+
+        // CCIT J.17
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.emphasis, Emphasis::CcitJ17);
     }
 }
