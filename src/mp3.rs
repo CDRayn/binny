@@ -1323,4 +1323,65 @@ mod tests
         let x = FrameHeader::new(data);
         assert_eq!(x.unwrap().bit_rate, 160_000);
     }
+
+    /// Verifies that FrameHeader::new() correctly parses the sampling rate frequency for MPEG Version 1.
+    #[test]
+    fn test_frame_header_new_sample_rate_v1()
+    {
+
+        // 44.1KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 44_100);
+
+        // 48KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0100, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 48_000);
+
+        // 32KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 32_000);
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the sampling rate frequency for MPEG Version 2
+   #[test]
+    fn test_frame_header_new_sample_rate_v2()
+    {
+        // 22.05KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 22_050);
+
+        // 24KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0011, 0b1110_0100, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 24_000);
+
+        // 16KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1111_0011, 0b1110_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 16_000);
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the sampling rate frequency for MPEG Version 2.5
+    #[test]
+    fn test_frame_header_new_sample_rate_v25()
+    {
+        // 11.025KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 11_025);
+
+        // 12KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0100, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 12_000);
+
+        // 8KHz
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_1000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().sample_rate, 8_000);
+    }
 }
