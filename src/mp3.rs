@@ -1503,6 +1503,7 @@ mod tests
         assert_eq!(x.intensity_stereo, None);
         assert_eq!(x.ms_stereo, None);
     }
+
     /// Verifies that FrameHeader::new() correctly parses the mode extension for Layer III
     #[test]
     fn test_frame_header_new_mode_ext_layer3()
@@ -1534,5 +1535,20 @@ mod tests
         assert_eq!(x.mode_ext_band, None);
         assert_eq!(x.intensity_stereo, Some(true));
         assert_eq!(x.ms_stereo, Some(true));
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the copyright flag
+    #[test]
+    fn test_frame_header_new_copyright()
+    {
+        // Without copyright
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.copy_righted, false);
+
+        // With copyright
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_1011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.copy_righted, true);
     }
 }
