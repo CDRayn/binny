@@ -42,14 +42,14 @@ enum LayerDesc
 }
 
 // Protection bit
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 enum ProtectionBit
 {
     Protected, // Protected by following 16 bit CRC header (0)
     Unprotected, // Not protected (1)
 }
 // Channel Mode
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 enum ChannelMode
 {
     Stereo,
@@ -57,7 +57,7 @@ enum ChannelMode
     DualChannel,    // 2 Mono Channels
     SingleChannel,  // Mono
 }
-
+#[derive(Copy, Clone)]
 enum Emphasis
 {
     None,
@@ -67,19 +67,20 @@ enum Emphasis
 }
 
 // Audio Layer I/II/II frame header
+#[derive(Copy, Clone)]
 struct FrameHeader
 {
     mpeg_version: MpegVersion,      // MPEG Version of the frame
     layer_desc: LayerDesc,          // MPEG layer of the frame
-    protection_bit: ProtectionBit,     // If true, no 16 bit CRC follows the header
+    protection_bit: ProtectionBit,  // If true, no 16 bit CRC follows the header
     bit_rate: u32,                  // The bitrate for the frame
     sample_rate: u32,               // The sample rate of the frame in bits per second
     padded: bool,                   // If true, use a padding slot to fit the bitrate
     private: bool,                  // Informative only
     channel_mode: ChannelMode,      // Channel model of the frame
     mode_ext_band: Option<u8>,      // Only used in Layer I & II joint stereo. The value is the start band.
-    intensity_stereo: Option<bool>, // Only used in Layer III join stereo.
-    ms_stereo: Option<bool>,        // Only used in Layer III join stereo.
+    intensity_stereo: Option<bool>, // Only used in Layer III joint stereo.
+    ms_stereo: Option<bool>,        // Only used in Layer III joint stereo.
     copy_righted: bool,             // Has the same meaning as the copyright bit on CDs
     original: bool,                 // If true, the frame presides on its original media
     emphasis: Emphasis,         // Tells the de-coder to de-emphasize the file during decoding, is rarely used
@@ -256,15 +257,15 @@ impl FrameHeader
             0b11 => ChannelMode::SingleChannel,
             _ => return Err(FrameHeaderError::new("Error encountered when parsing channel mode!"))
         };
-        let mode_ext_band: Option<u8> = None;
-        let intensity_stereo: Option<bool> = None;
-        let ms_stereo: Option<bool> = None;
+        let mut mode_ext_band: Option<u8> = None;
+        let mut intensity_stereo: Option<bool> = None;
+        let mut ms_stereo: Option<bool> = None;
 
         if channel_mode == ChannelMode::JointStereo
         {
             if layer_desc == LayerDesc::Layer1 || layer_desc == LayerDesc::Layer2
             {
-                let mode_ext_band = match (MODE_EXT & value) >> 4
+                mode_ext_band = match (MODE_EXT & value) >> 4
                 {
                     0b00 => Some(4),
                     0b01 => Some(8),
@@ -273,25 +274,25 @@ impl FrameHeader
                     _    => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
                 };
                 let intensity_stereo: Option<bool> = None;
-                let ms_stereo: Option<bool> = None;
+                let  ms_stereo: Option<bool> = None;
             }
             else
             {
                 let mode_ext_band: Option<u8> = None;
-                let intensity_stereo = match (MODE_EXT & value) >> 4
+                intensity_stereo = match (MODE_EXT & value) >> 4
                 {
-                    0b00 => false,
-                    0b01 => true,
-                    0b10 => true,
-                    0b11 => false,
+                    0b00 => Some(false),
+                    0b01 => Some(true),
+                    0b10 => Some(false),
+                    0b11 => Some(true),
                     _    => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
                 };
-                let ms_stereo = match (MODE_EXT & value) >> 4
+                ms_stereo = match (MODE_EXT & value) >> 4
                 {
-                    0b00 => false,
-                    0b01 => false,
-                    0b10 => true,
-                    0b11 => true,
+                    0b00 => Some(false),
+                    0b01 => Some(false),
+                    0b10 => Some(true),
+                    0b11 => Some(true),
                     _   => return Err(FrameHeaderError::new("Error encountered when parsing mode extension!"))
                 };
             }
@@ -1437,5 +1438,101 @@ mod tests
         let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1100_0011];
         let x = FrameHeader::new(data);
         assert_eq!(x.unwrap().channel_mode, ChannelMode::SingleChannel);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the mode extension for Layer I
+    #[test]
+    fn test_frame_header_new_mode_ext_layer1()
+    {
+        // Bands 4 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1111, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(4));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 8 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1111, 0b1110_0000, 0b0101_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(8));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 12 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1111, 0b1110_0000, 0b0110_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(12));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 16 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1111, 0b1110_0000, 0b0111_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(16));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the mode extension for Layer II
+    #[test]
+    fn test_frame_header_new_mode_ext_layer2()
+    {
+        // Bands 4 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1101, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(4));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 8 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1101, 0b1110_0000, 0b0101_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(8));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 12 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1101, 0b1110_0000, 0b0110_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(12));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+
+        // Bands 16 to 31
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1101, 0b1110_0000, 0b0111_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, Some(16));
+        assert_eq!(x.intensity_stereo, None);
+        assert_eq!(x.ms_stereo, None);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the mode extension for Layer III
+    #[test]
+    fn test_frame_header_new_mode_ext_layer3()
+    {
+        // Intensity Stereo off, MS Stereo off
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, None);
+        assert_eq!(x.intensity_stereo, Some(false));
+        assert_eq!(x.ms_stereo, Some(false));
+
+        // Intensity Stereo on, MS Stereo off
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0101_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, None);
+        assert_eq!(x.intensity_stereo, Some(true));
+        assert_eq!(x.ms_stereo, Some(false));
+
+        // Intensity Stereo off, MS Stereo on
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0110_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, None);
+        assert_eq!(x.intensity_stereo, Some(false));
+        assert_eq!(x.ms_stereo, Some(true));
+
+        // Intensity Stereo off, MS Stereo on
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0111_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.mode_ext_band, None);
+        assert_eq!(x.intensity_stereo, Some(true));
+        assert_eq!(x.ms_stereo, Some(true));
     }
 }
