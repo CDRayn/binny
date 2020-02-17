@@ -1551,4 +1551,19 @@ mod tests
         let x = FrameHeader::new(data).unwrap();
         assert_eq!(x.copy_righted, true);
     }
+
+    /// Verifies that FrameHeader::new() correctly parses the original flag
+    #[test]
+    fn test_frame_header_new_original()
+    {
+        // Copy
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.original, false);
+
+        // Original
+        let data: [u8; 4] = [0b1111_1111, 0b1111_1011, 0b1110_0000, 0b0100_0111];
+        let x = FrameHeader::new(data).unwrap();
+        assert_eq!(x.original, true);
+    }
 }
