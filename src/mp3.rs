@@ -49,7 +49,7 @@ enum ProtectionBit
     Unprotected, // Not protected (1)
 }
 // Channel Mode
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum ChannelMode
 {
     Stereo,
@@ -1383,5 +1383,59 @@ mod tests
         let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_1000, 0b1100_0011];
         let x = FrameHeader::new(data);
         assert_eq!(x.unwrap().sample_rate, 8_000);
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the padding bit.
+    #[test]
+    fn test_frame_header_new_padding()
+    {
+        // Padding
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().padded, false);
+
+        // No padding
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0010, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().padded, true);
+    }
+
+    /// Verifies that FrameHeader::new() correctly parses the private bit
+    #[test]
+    fn test_frame_header_new_private_bit()
+    {
+        // Not Private
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().private, false);
+
+        // Private
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0001, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().private, true);
+    }
+    /// Verifies that FrameHeader::new() correctly parses the channel mode
+    #[test]
+    fn test_frame_header_new_channel_model()
+    {
+        // Stereo
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b0000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().channel_mode, ChannelMode::Stereo);
+
+        // Joint Stereo (Stereo)
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b0100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().channel_mode, ChannelMode::JointStereo);
+
+        // Dual channel (2 mono channels)
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1000_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().channel_mode, ChannelMode::DualChannel);
+
+        // Single Channel (Mono)
+        let data: [u8; 4] = [0b1111_1111, 0b1110_0011, 0b1110_0000, 0b1100_0011];
+        let x = FrameHeader::new(data);
+        assert_eq!(x.unwrap().channel_mode, ChannelMode::SingleChannel);
     }
 }
