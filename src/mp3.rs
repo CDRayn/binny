@@ -389,6 +389,12 @@ impl FrameHeader
             false => 0,
         };
         // TODO: Replace this with the more accurate frame length calculation described in the official MP3 standard
+        if self.protection_bit == ProtectionBit::Protected
+        {
+            // If the protection bit isn't set, then a 16 bit (2 Byte) CRC proceeds after the header
+            // and before the data.
+            return (samples * self.bit_rate) / (8 * self.sample_rate)  + padding + 2;
+        }
         return (samples * self.bit_rate) / (8 * self.sample_rate)  + padding;
     }
 }
