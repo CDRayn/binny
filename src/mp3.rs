@@ -353,8 +353,8 @@ impl FrameHeader
             }
         )
     }
-    /// Calculates the frame length in bytes based on the frame header values. Note, the frame
-    /// length is the length of a frame when compressed. See section G of https://www.datavoyage.com/mpgscript/mpeghdr.htm
+    /// Calculates the frame length in bytes based on the frame header values. Note, the frame length is the
+    /// length of a frame when compressed. See section G of https://www.codeproject.com/Articles/8295/MPEG-Audio-Frame-Header
     fn calc_frame_len(&self) -> u32
     {
         static SAMPLES_PER_FRAME: [[u32; 3]; 3] = [
@@ -374,7 +374,6 @@ impl FrameHeader
         {
             row = row + 2;
         }
-
         if self.mpeg_version == MpegVersion::Version2
         {
             col = col + 1;
@@ -383,16 +382,14 @@ impl FrameHeader
         {
             col = col + 2;
         }
-
         let samples = SAMPLES_PER_FRAME[row][col];
-
         let padding: u32 = match self.padded
         {
             true => 1,
             false => 0,
         };
         // TODO: Replace this with the more accurate frame length calculation described in the official MP3 standard
-        return (samples / 8 * self.bit_rate / self.sample_rate + padding) as u32;
+        return (samples * self.bit_rate) / (8 * self.sample_rate)  + padding;
     }
 }
 
@@ -430,6 +427,7 @@ impl Mp3
     }
 }
 
+// TODO: Consolidate and organize these tests
 #[cfg(test)]
 mod tests
 {
@@ -1630,7 +1628,7 @@ mod tests
     #[test]
     fn test_frame_header_calc_frame_len()
     {
-        // Layer III, 128Kbps, 44.1KHz sample rate, not padded
+        // Version 1, Layer 3, 128Kbps, 44.1KHz sample rate, not padded
         let header = FrameHeader {
             mpeg_version: MpegVersion::Version1,
             layer_desc: LayerDesc::Layer3,
@@ -1649,7 +1647,7 @@ mod tests
         };
         assert_eq!(header.calc_frame_len(), 417);
 
-        // Layer III, 128Kbps, 44.1KHz sample rate, padded
+        // Version 1, Layer 3, 128Kbps, 44.1KHz sample rate, padded
         let header = FrameHeader {
             mpeg_version: MpegVersion::Version1,
             layer_desc: LayerDesc::Layer3,
@@ -1668,7 +1666,7 @@ mod tests
         };
         assert_eq!(header.calc_frame_len(), 418);
 
-        // Layer I, 128Kbps, 44.1KHz sample rate, not padded
+        // Version 1, Layer 1, 128Kbps, 44.1KHz sample rate, not padded
         let header = FrameHeader {
             mpeg_version: MpegVersion::Version1,
             layer_desc: LayerDesc::Layer1,
@@ -1686,5 +1684,81 @@ mod tests
             emphasis: Emphasis::None,
         };
         assert_eq!(header.calc_frame_len(), 139);
+
+        // Version 1, Layer 1, 128Kbps, 44.1KHz sample rate, not padded
+        let header = FrameHeader {
+            mpeg_version: MpegVersion::Version1,
+            layer_desc: LayerDesc::Layer1,
+            protection_bit: ProtectionBit::Unprotected,
+            bit_rate: 128_000,
+            sample_rate: 44_100,
+            padded: true,
+            private: false,
+            channel_mode: ChannelMode::SingleChannel,
+            mode_ext_band: None,
+            intensity_stereo: None,
+            ms_stereo: None,
+            copy_righted: true,
+            original: false,
+            emphasis: Emphasis::None,
+        };
+        assert_eq!(header.calc_frame_len(), 140);
+
+        // Version 1, Layer 3, 448Kbps, 44.1KHz sample rate, not padded
+        let header = FrameHeader {
+            mpeg_version: MpegVersion::Version1,
+            layer_desc: LayerDesc::Layer3,
+            protection_bit: ProtectionBit::Unprotected,
+            bit_rate: 448_000,
+            sample_rate: 44_100,
+            padded: false,
+            private: false,
+            channel_mode: ChannelMode::SingleChannel,
+            mode_ext_band: None,
+            intensity_stereo: None,
+            ms_stereo: None,
+            copy_righted: true,
+            original: false,
+            emphasis: Emphasis::None,
+        };
+        assert_eq!(header.calc_frame_len(), 1_462);
+
+        // Version 1, Layer 3, 448Kbps, 44.1KHz sample rate, padded
+        let header = FrameHeader {
+            mpeg_version: MpegVersion::Version1,
+            layer_desc: LayerDesc::Layer3,
+            protection_bit: ProtectionBit::Unprotected,
+            bit_rate: 448_000,
+            sample_rate: 44_100,
+            padded: true,
+            private: false,
+            channel_mode: ChannelMode::SingleChannel,
+            mode_ext_band: None,
+            intensity_stereo: None,
+            ms_stereo: None,
+            copy_righted: true,
+            original: false,
+            emphasis: Emphasis::None,
+        };
+        assert_eq!(header.calc_frame_len(), 1_463);
+
+        // Version 2, Layer 3, 144Kbps, 44.1KHz sample rate, not padded
+        let header = FrameHeader {
+            mpeg_version: MpegVersion::Version2,
+            layer_desc: LayerDesc::Layer3,
+            protection_bit: ProtectionBit::Unprotected,
+            bit_rate: 144_000,
+            sample_rate: 44_100,
+            padded: false,
+            private: false,
+            channel_mode: ChannelMode::SingleChannel,
+            mode_ext_band: None,
+            intensity_stereo: None,
+            ms_stereo: None,
+            copy_righted: true,
+            original: false,
+            emphasis: Emphasis::None,
+        };
+        assert_eq!(header.calc_frame_len(), 235);
     }
 }
