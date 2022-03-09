@@ -1,8 +1,6 @@
 use std::{error::Error, fmt};
 use std::io::Read;
 
-use crate::mp3::Emphasis::None;
-use crate::mp3::ProtectionBit::Protected;
 
 // These constants are for parsing the various portions of the MP3 Frame header. The
 // bits set to True in these constants are the bits used by that section of the header.
@@ -24,7 +22,7 @@ const EMPHASIS: u32 =           0x00_00_00_03; // 00000000 00000000 00000000 000
 
 /// MPEG Audio version ID
 // TODO: manually implement these traits to reduce compile times.
-#[derive(Clone, Copy, PartialEq, Debug, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 enum MpegVersion
 {
     Version25,  // MPEG Version 2.5 (00)
@@ -440,7 +438,6 @@ impl Mp3
 mod tests
 {
     use super::*;
-    use crate::mp3::LayerDesc::Layer1;
 
     // This test case verifies the FrameHeader::decode_bitrate() method.
     #[test]
