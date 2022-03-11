@@ -1,5 +1,6 @@
 use std::{error::Error, fmt};
 use std::io::Read;
+use std::str;
 
 
 // These constants are for parsing the various portions of the MP3 Frame header. The
@@ -640,33 +641,116 @@ static ID3v1Speeds: &[&str] = &[
 
 // Represent a parsed ID3v1 tag commonly used to store meta information
 // see https://en.wikipedia.org/wiki/ID3
-pub struct ID3v1Tag
+pub struct ID3v1Tag<'a>
 {
-    title:      String,
-    artist:     String,
-    album:      String,
-    year:       u16,
-    comment:    String,
-    track:      Option<u8>,
-    genre:      u8,
+    pub title:      &'a str,
+    pub artist:     &'a str,
+    pub album:      &'a str,
+    pub year:       u32,
+    pub comment:    &'a str,
+    pub track:      Option<u8>,
+    pub genre:      &'a str,
 }
 
 // Represents a parsed IDv1 "enhanced" tag commonly used to store meta information
 // see https://en.wikipedia.org/wiki/ID3
-pub struct ID3v1EnhancedTag
+pub struct ID3v1EnhancedTag<'a>
 {
-    title:      String,
-    artist:     String,
-    album:      String,
+    pub title:      &'a str,
+    pub artist:     &'a str,
+    pub album:      &'a str,
     // 0 = unset, 1 = slow, 2 = medium, 3 = fast, 4 = hardcore
-    speed:      u8,
+    pub speed:      u8,
     // Free text field
-    genre:      String,
+    pub genre:      &'a str,
     // The start time of the track formatted as mmmm:ss
-    start_time: String,
+    pub start_time: &'a str,
     // The end time of the track formatted as mmmm:ss
-    end_time:   String,
+    pub end_time:   &'a str,
 }
+
+#[derive(Debug, PartialEq)]
+struct ID3v1Error
+{
+    details: String
+}
+
+impl ID3v1Error
+{
+    fn new(msg: &str) -> ID3v1Error
+    {
+        ID3v1Error{details: msg.to_string()}
+    }
+}
+
+impl fmt::Display for ID3v1Error
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+    {
+        write!(f, "{}", self.details)
+    }
+}
+
+impl Error for ID3v1Error
+{
+    fn description(&self) -> &str
+    {
+        return &self.details;
+    }
+}
+
+
+const TAG: [u8;3] = [b'T', b'A', b'G'];
+
+impl <'a>ID3v1Tag<'a> {
+
+    fn new(mut data: &[u8]) -> Result<ID3v1Tag, ID3v1Error>
+    {
+        if data[0..3] != TAG {
+            return Err(ID3v1Error::new("Error encountered when parsing emphasis!"))
+        }
+        let title = match std::str::from_utf8(&data[3..33]){
+            Ok(valid) => valid,
+            Err(_) => return Err(ID3v1Error::new("Invalid UTF-8 encountered"))
+        };
+        let artist = match std::str::from_utf8(&data[33..63]) {
+            Ok(valid) => valid,
+            Err(_) => return Err(ID3v1Error::new("Invalid UTF-8 encountered"))
+        };
+        let album = match std::str::from_utf8(&data[63..93]) {
+            Ok(valid) => valid,
+            Err(_) => return Err(ID3v1Error::new("Invalid UTF-8 encountered"))
+        };
+        let bytes: [u8; 4] = [data[93], data[94], data[95], data[96]];
+        let year = u32::from_ne_bytes(bytes);
+        let comment = match std::str::from_utf8(&data[97..125]) {
+            Ok(valid) => valid,
+            Err(_) => return Err(ID3v1Error::new("Invalid UTF-8 encountered"))
+        };
+        let mut track = 0 as u8;
+        if data[125] == 0 {
+            track = data[126];
+        }
+        if data[127] > 191 {
+            return Err(ID3v1Error::new("Invalid ID3v1 genre encountered"))
+        }
+
+        let genre = ID3V1_GENRE[data[127] as usize];
+
+        return Ok(
+            ID3v1Tag{
+                title,
+                artist,
+                album,
+                year,
+                comment,
+                track: Some(track),
+                genre
+            }
+        )
+    }
+}
+
 
 // TODO: Consolidate and organize these tests
 #[cfg(test)]
